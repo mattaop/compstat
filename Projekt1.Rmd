@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 rate = 3 #Rate parameter
 n = 1000 #Number of samples
 generate.exponential <- function(rate, n){
-  u <- runif(n, 0,1)
+  u <- runif(n)
   x <- - 1/rate * log(u)
   return(x)
 }
@@ -25,3 +25,88 @@ hist(x, density=20, breaks = 30, prob=TRUE)
 curve(dexp(x, rate=rate), add=TRUE, col="darkblue", lwd=2)
 ```
 
+```{r A2}
+# Generate samples from g(X)
+rate = 3 #Rate parameter
+n = 100 #Number of samples
+generate.samples.g<- function(c, alpha, n){
+  u <- runif(n, 0,1)
+  for (i in 1:n){
+    if (u < c/(alpha)){
+      x <- (u*(alpha)/c)^(1/alpha)
+    }
+    else{
+      x <- -log(exp(-1)-u/c)
+    }
+    
+  }
+  return(x)
+}
+x <- generate.samples.g(0.1, 0.1, n)
+hist(x, density=20, breaks = 30, prob=TRUE)
+```
+
+
+```{r A3}
+# Generate samples from normal distribution with Box-Muller
+n = 10000 #Number of samples
+generate.normal <- function(n){
+  u1 <- runif(n)
+  u2 <- runif(n)
+  x1 <- sqrt(-2*log(u1))*cos(2*pi*u2)
+  x2 <- sqrt(-2*log(u1))*sin(2*pi*u2)
+  X <- rbind(x1, x2)
+  return (X)
+}
+X <- generate.normal(n)
+hist(X[1,], density=20, breaks = 30, prob=TRUE)
+curve(dnorm, add=TRUE, col="darkblue", lwd=2)
+hist(X[2,], density=20, breaks = 30, prob=TRUE)
+curve(dnorm, add=TRUE, col="darkblue", lwd=2)
+print("Observed: ")
+mean(X)
+cov(t(X))
+```
+
+```{r A4}
+# Generate n samples from d variate normal distribution
+n = 10000 #Number of samples
+mu = c(0,0)
+sigma = cbind(c(1,0.5),c(0.5,1))
+generate.d.normal <- function(n, mu, sigma){
+  A = chol(sigma)
+  d = length(mu)
+  X = generate.normal(n*d)
+  x = matrix(X$var1, nrow=d, ncol=n)
+  Z = mu+t(A)%*%x
+}
+Z <- generate.d.normal(n, mu, sigma)
+print("Expected: ")
+mu
+sigma
+print('Observed: ')
+mean(Z)
+cov(t(Z))
+```
+
+
+```{r B1}
+# Generate n samples from d variate normal distribution
+n = 10000 #Number of samples
+mu = c(0,0)
+sigma = cbind(c(1,0.5),c(0.5,1))
+generate.d.normal <- function(n, mu, sigma){
+  A = chol(sigma)
+  d = length(mu)
+  X = generate.normal(n*d)
+  x = matrix(X$var1, nrow=d, ncol=n)
+  Z = mu+t(A)%*%x
+}
+Z <- generate.d.normal(n, mu, sigma)
+print("Expected: ")
+mu
+sigma
+print('Observed: ')
+mean(Z)
+cov(t(Z))
+```
