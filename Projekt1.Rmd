@@ -1,0 +1,27 @@
+---
+title: "CompStat 1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+
+```{r A1}
+# Generate samples from exponential distribution
+rate = 3 #Rate parameter
+n = 1000 #Number of samples
+generate.exponential <- function(rate, n){
+  u <- runif(n, 0,1)
+  x <- - 1/rate * log(u)
+  return(x)
+}
+x <- generate.exponential(rate, n)
+hist(x, density=20, breaks = 30, prob=TRUE)
+curve(dexp(x, rate=rate), add=TRUE, col="darkblue", lwd=2)
+```
+
