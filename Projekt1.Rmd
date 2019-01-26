@@ -134,46 +134,76 @@ rejection.sampling <- function(n, alpha){
   }
   return (samples)
 }
-x <- rejection.sampling(n, alpha)
-mean(x)
-var(x)
-alpha
+y <- rejection.sampling(n, alpha)
+print("Expected: ")
+cat("Mean: ", alpha, "\n")
+cat("Variance: ", alpha, "\n")
+print("Observed: ")
+cat("Mean: ", mean(y), "\n")
+cat("Variance: ", var(y), "\n")
 ```
 
 ```{r B2}
 log.gamma <- function(x, alpha){
-  if (x>0){
-    return((alpha-1)*log(x)-x)
-  }
-  else{
-    return (-inf)
-  }
+  return((alpha-1)*log(x)-x)
 }
 # Ratio-of-uniforms method
-n <- 100
-alpha <- 2000
-ratio.of.uniforms <- function(alpha, n){
+n <- 1000
+alpha <- 30
+ratio.of.uniforms <- function(n, alpha){
   reject_counter <- -n
   b.minus <- 0
-  log.b.plus <- (alpha+1)/2*log(alpha+1)-(alpha+1)/2
-  log.a <- (alpha-1)/2*log(alpha-1)-(alpha-1)/2
+  log.b.plus <- (alpha+1)/2*(log(alpha+1)-1)
+  log.a <- (alpha-1)/2*(log(alpha-1)-1)
   samples <- c()
   for(i in 1:n){
     repeat{
       reject_counter <- reject_counter + 1
-      log.x1 <- -rexp(1, rate=1) - log.a
-      log.x2 <- -rexp(1, rate=1) - log.b.plus
-      log.y <- -log.x2 + log.x1
+      log.x1 <- -generate.exponential(1, rate=1) + log.a
+      log.x2 <- -generate.exponential(1, rate=1) + log.b.plus
+      log.y <- log.x2 - log.x1
       if (2*log.x1 <= log.gamma(exp(log.y), alpha)){
         samples <- c(samples, exp(log.y))
         break
       }
     }
   }
-  print(reject_counter)
+  cat("Rejection ratio: ", reject_counter/n , "\n")
   return (samples)
 }
-y <- ratio.of.uniforms(alpha, n)
-mean(y)
-var(y)
+y <- ratio.of.uniforms(n, alpha)
+print("Expected: ")
+cat("Mean: ", alpha, "\n")
+cat("Variance: ", alpha, "\n")
+print("Observed: ")
+cat("Mean: ", mean(y), "\n")
+cat("Variance: ", var(y), "\n")
 ```
+
+```{r B3}
+n = 1000
+alpha = 2000
+beta = 2
+sample.gamma <- function(n, alpha, beta){
+  if(alpha < 1){
+    return(rejection.sampling(n, alpha)/beta)
+  }
+  else if (alpha == 1){
+    return(generate.exponential(1, n)/beta)
+  }
+  else if (alpha > 1){
+    return(ratio.of.uniforms(n, alpha)/beta)
+  }
+  else{
+    return(0)
+  }
+}
+y <- sample.gamma(n, alpha, beta)
+print("Expected: ")
+cat("Mean: ", alpha/beta, "\n")
+cat("Variance: ", alpha/beta^2, "\n")
+print("Observed: ")
+cat("Mean: ", mean(y), "\n")
+cat("Variance: ", var(y), "\n")
+```
+
