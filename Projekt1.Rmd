@@ -267,7 +267,7 @@ mean(samples)
 
 ```{r D1.2}
 # Rejection sampling
-n <- 2000 #Number of samples
+n <- 20000#Number of samples
 multinomial.sampling <- function(n, theta){
   u <- runif(n)
   samples <- c(0, 0, 0, 0)
@@ -275,9 +275,9 @@ multinomial.sampling <- function(n, theta){
   return (y)
 }
 
-negative.f <- function(theta){
+f <- function(theta){
   y <- c(125, 18, 20, 34)
-  return (-(2+theta)^y[1]*(1-theta)^(y[2]+y[3])*theta^y[4])
+  return ((2+theta)^y[1]*(1-theta)^(y[2]+y[3])*theta^y[4])
   
 }
 log.f <- function(theta){
@@ -285,24 +285,35 @@ log.f <- function(theta){
   return (y[1]*log(2+theta)+(y[2]+y[3])*log(1-theta)+y[4]*log(theta))
 }
 rejection.sampling.2 <- function(n){
-  theta.max <- optim(par=c(0.5), fn=negative.f)$par
-  log.c <- log.f(theta.max)
+  normalizing_constant <- integrate(f, 0, 1)
+  #print(normalizing_constant$value)
+  c <- optimize(f, c(0, 1), maximum=TRUE)$objective/normalizing_constant$value
+  #log.c <- log(c)
   samples <- c()
   for(i in 1:n){
     repeat{
       theta <- runif(1)
-      log.acceptance.prob <- log.f(theta)-log.c
-      log.u <- -generate.exponential(1, rate=1)
-      if (log.u <= log.acceptance.prob){
+      #log.acceptance.prob <- log.f(theta)-log.c
+      #log.u <- -generate.exponential(1, rate=1)
+      acceptance.prob <- f(theta)/(normalizing_constant$value*c)
+      #if (log.u <= log.acceptance.prob){
+      #  samples <- c(samples, theta)
+      #  break
+      #}
+      u <- runif(1)
+      if (u <= acceptance.prob){
         samples <- c(samples, theta)
         break
       }
+      
     }
   }
   return (samples)
 }
 samples <- rejection.sampling.2(n)
 hist(samples, density=20, breaks = 30, prob=TRUE)
+abline(v = mean(samples), col = "blue", lwd = 2)
+curve(f(x), add=TRUE, col="darkblue", lwd=2)
 mean(samples)
 ```
 
@@ -313,10 +324,23 @@ monte.carlo.integration <- function(){
   mu <- sum(samples)/m
   return (mu)
 }
-theta.f <- function(theta){
+f <- function(theta){
   y <- c(125, 18, 20, 34)
-  return (theta*(2+theta)^y[1]*(1-theta)^(y[2]+y[3])*theta^y[4])
+  return ((2+theta)^y[1]*(1-theta)^(y[2]+y[3])*theta^y[4])
 }
-print(monte.carlo.integration())
-integrate(theta.f, lower=0, upper=1)
+mu <- monte.carlo.integration()
+mu
+integration_constant <- integrate(f, lower=0, upper=1)
+numerical_integration <- function(integration_constant){
+  h <- 1/10
+  a <- 0
+  b <- 1
+  sum_int <- 0
+  for (i in 1:(integer((b-a)/h))){
+    sum_int <- sum_int + i*h*f(i*h)/integration_constant
+  }
+  return (sum_int)
+}
+Expected_value <- numerical_integration(integration_constant)
+Expected_value
 ```
