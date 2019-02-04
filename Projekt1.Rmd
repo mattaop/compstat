@@ -95,7 +95,7 @@ The function generate.normal uses Box-Muller to generate an $n$-vector of indepe
 
 ```{r A3}
 # Generate samples from normal distribution with Box-Muller
-n <- 10000 #Number of samples
+n <- 100000 #Number of samples
 generate.normal <- function(n){
   u1 <- runif(n)
   u2 <- runif(n)
@@ -113,8 +113,11 @@ curve(dnorm, add=TRUE, col="darkblue", lwd=2)
 ```
 
 ```{r, echo=FALSE}
-print("Observed: ")
-mean(X)
+cat("Expected mean: ", c(0, 0), "\n")
+cat("Expected variance:  \n")
+cbind(c(1,0),c(0,1))
+cat("Sample mean: ", mean(X[1, ]), mean(X[2, ]), "\n")
+cat("Sample variance: \n")
 cov(t(X))
 ```
 
@@ -135,22 +138,23 @@ generate.d.normal <- function(n, mu, sigma){
   x <- matrix(X[1,], nrow=d, ncol=n)
   Z <- mu+t(A)%*%x
 }
-Z <- generate.d.normal(n, mu, sigma)
 ```
 
 ```{r, echo=FALSE}
-print("Expected: ")
-mu
+Z <- generate.d.normal(n, mu, sigma)
+cat("Expected mean: ", mu, "\n")
+cat("Expected variance: \n")
 sigma
-print('Observed: ')
-mean(Z)
+cat("\n")
+cat("Sample mean: ", mean(Z[1,]), mean(Z[2,]), "\n")
+cat("Sample variance: \n")
 cov(t(Z))
 ```
-As we see, $\mu$ is close to 
+As we see, $\tilde \mu$ is close to 
 ER MU KUN 2-VARIAT?
 
 
-# B
+# Problem B
 
 ```{r B1}
 #Function f(x)
@@ -178,7 +182,7 @@ function.g <- function(x, alpha){
 }
 
 # Generate n samples from d variate normal distribution
-n <- 1000 #Number of samples
+n <- 10000 #Number of samples
 alpha <- 0.3
 rejection.sampling <- function(n, alpha){
   c <- (alpha+exp(1))/(gamma(alpha)*alpha*exp(1))
@@ -195,16 +199,15 @@ rejection.sampling <- function(n, alpha){
   }
   return (samples)
 }
-y <- rejection.sampling(n, alpha)
 ```
 
 ```{r, echo=FALSE}
-print("Expected: ")
-cat("Mean: ", alpha, "\n")
-cat("Variance: ", alpha, "\n")
-print("Observed: ")
-cat("Mean: ", mean(y), "\n")
-cat("Variance: ", var(y), "\n")
+y <- rejection.sampling(n, alpha)
+cat("Expected mean: ", alpha, "\n")
+cat("Expected variance: ",alpha, " \n")
+cat("Sample mean: ", mean(y), "\n")
+cat("Sample variance: ",  var(y))
+
 ```
 
 ```{r B2}
@@ -213,7 +216,7 @@ log.gamma <- function(x, alpha){
   return((alpha-1)*log(x)-x)
 }
 # Ratio-of-uniforms method
-n <- 1000
+n <- 10000
 alpha <- 30
 ratio.of.uniforms <- function(n, alpha){
   sample.counter <- 0
@@ -237,10 +240,10 @@ ratio.of.uniforms <- function(n, alpha){
   cat("Rejection ratio: ", (sample.counter-n)/n , "\n")
   return (samples)
 }
-y <- ratio.of.uniforms(n, alpha)
 ```
 
 ```{r, echo=FALSE}
+y <- ratio.of.uniforms(n, alpha)
 print("Expected: ")
 cat("Mean: ", alpha, "\n")
 cat("Variance: ", alpha, "\n")
@@ -250,7 +253,7 @@ cat("Variance: ", var(y), "\n")
 ```
 
 ```{r B3}
-n = 1000
+n = 10000
 alpha = 0.1
 beta = 2
 sample.gamma <- function(n, alpha, beta){
@@ -267,10 +270,10 @@ sample.gamma <- function(n, alpha, beta){
     return(0)
   }
 }
-y <- sample.gamma(n, alpha, beta)
 ```
 
 ```{r, echo=FALSE}
+y <- sample.gamma(n, alpha, beta)
 print("Expected: ")
 cat("Mean: ", alpha/beta, "\n")
 cat("Variance: ", alpha/beta^2, "\n")
