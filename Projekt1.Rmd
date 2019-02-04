@@ -15,7 +15,7 @@ Here using the inversion method, we get:
 $$
 x = F^{-1}(u) = -\frac{1}{\lambda}log(u), \quad u \sim U(0,1).
 $$
-Thus we get a exponential samples, by sampling from the uniform distribution, and use the inversion method. Under it a function that generates a vector of $n$ samples from an exponentially distributed random variable with rate $\lambda$.
+Thus we get xponential samples, by sampling from the uniform distribution, and use the inversion method. Under there is a function that generates a vector of $n$ samples from an exponentially distributed random variable with rate $\lambda$.
 
 ```{r A1}
 # Generate samples from exponential distribution
@@ -109,6 +109,10 @@ hist(X[1,], density=20, breaks = 30, prob=TRUE)
 curve(dnorm, add=TRUE, col="darkblue", lwd=2)
 hist(X[2,], density=20, breaks = 30, prob=TRUE)
 curve(dnorm, add=TRUE, col="darkblue", lwd=2)
+
+```
+
+```{r, echo=FALSE}
 print("Observed: ")
 mean(X)
 cov(t(X))
@@ -132,6 +136,9 @@ generate.d.normal <- function(n, mu, sigma){
   Z <- mu+t(A)%*%x
 }
 Z <- generate.d.normal(n, mu, sigma)
+```
+
+```{r, echo=FALSE}
 print("Expected: ")
 mu
 sigma
@@ -189,6 +196,9 @@ rejection.sampling <- function(n, alpha){
   return (samples)
 }
 y <- rejection.sampling(n, alpha)
+```
+
+```{r, echo=FALSE}
 print("Expected: ")
 cat("Mean: ", alpha, "\n")
 cat("Variance: ", alpha, "\n")
@@ -198,6 +208,7 @@ cat("Variance: ", var(y), "\n")
 ```
 
 ```{r B2}
+# An analytic log(gamma(x, alpha))-function
 log.gamma <- function(x, alpha){
   return((alpha-1)*log(x)-x)
 }
@@ -227,6 +238,9 @@ ratio.of.uniforms <- function(n, alpha){
   return (samples)
 }
 y <- ratio.of.uniforms(n, alpha)
+```
+
+```{r, echo=FALSE}
 print("Expected: ")
 cat("Mean: ", alpha, "\n")
 cat("Variance: ", alpha, "\n")
@@ -254,6 +268,9 @@ sample.gamma <- function(n, alpha, beta){
   }
 }
 y <- sample.gamma(n, alpha, beta)
+```
+
+```{r, echo=FALSE}
 print("Expected: ")
 cat("Mean: ", alpha/beta, "\n")
 cat("Variance: ", alpha/beta^2, "\n")
@@ -377,6 +394,9 @@ rejection.sampling.multinomial <- function(n){
   return (li)
 }
 theta <- rejection.sampling.multinomial(n)
+```
+
+```{r, echo=FALSE}
 hist(theta$samples, density=20, breaks = 30, prob=TRUE)
 abline(v = mean(theta$samples), col = "blue", lwd = 2)
 curve(posterior.f(x)*sum(theta$samples)/sum(posterior.f(theta$samples)), add=TRUE, col="darkblue", lwd=2)
@@ -404,6 +424,9 @@ numerical.integration <- function(theta){
   return (theta*posterior.f(theta))
 }
 Analytic_mean <- integrate(numerical.integration, lower=0,upper=1)$value/integrate(posterior.f, lower=0, upper=1)$value
+```
+
+```{r, echo=FALSE}
 cat("Observed mean: ", monte.carlo$observed_mean, "\n")
 cat("Analytic mean: ", Analytic_mean, "\n")
 ```
@@ -415,7 +438,7 @@ $$
 c^{-1} = \int_0^1 \frac{f(x)}{c} dx.
 $$
 Using the built in optimize and integrate function, we get the integral, which will be the ratio $\frac{\textrm{Total samples}}{\textrm{Accepted samples}}$:
-```{r D3}
+```{r D3, echo=FALSE}
 n = 20000 #number of samples
 cat("Observed: ", rejection.sampling.multinomial(n)$number.samples/n)
 cat("Analytic: ", optimize(posterior.f, c(0, 1), maximum=TRUE)$objective/integrate(posterior.f, lower=0, upper=1)$value)
