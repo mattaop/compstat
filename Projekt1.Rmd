@@ -22,8 +22,8 @@ Thus we get xponential samples, by sampling from the uniform distribution, and u
 rate <- 3 #Rate parameter
 n <- 1000 #Number of samples
 generate.exponential <- function(rate, n){
-  u <- runif(n)
-  x <- - 1/rate * log(u)
+  u <- runif(n) # Uniform distributed random variable
+  x <- - 1/rate * log(u) # Inversion method
   return(x)
 }
 x <- generate.exponential(rate, n)
@@ -68,11 +68,12 @@ Writing a function that returns $g$-samples.
 # Generate samples from g(X)
 rate <- 3 #Rate parameter
 n <- 1000 #Number of samples
-alpha <- 0.1
+alpha <- 0.1 # Alpha parameter
 generate.samples.g<- function(alpha, n){
-  c <- alpha*exp(1)/(alpha+exp(1))
-  u <- runif(n, 0,1)
+  c <- alpha*exp(1)/(alpha+exp(1)) # Analyticaly expression for c
+  u <- runif(n) # Uniform distributed random variable
   x <- c()
+  # For loop as we have to check which expression to apply
   for (i in 1:n){
     if (u[i] < c/(alpha)){
       x <- c(x, (u[i]*(alpha)/c)^(1/alpha))
@@ -97,19 +98,20 @@ The function generate.normal uses Box-Muller to generate an $n$-vector of indepe
 # Generate samples from normal distribution with Box-Muller
 n <- 100000 #Number of samples
 generate.normal <- function(n){
-  u1 <- runif(n)
-  u2 <- runif(n)
-  x1 <- sqrt(-2*log(u1))*cos(2*pi*u2)
-  x2 <- sqrt(-2*log(u1))*sin(2*pi*u2)
+  u1 <- runif(n) # Uniform distributed random variable
+  u2 <- runif(n) # Uniform distributed random variable
+  x1 <- sqrt(-2*log(u1))*cos(2*pi*u2) # Normal distributed random variable
+  x2 <- sqrt(-2*log(u1))*sin(2*pi*u2) # Normal distributed random variable
   X <- rbind(x1, x2)
   return (X)
 }
 X <- generate.normal(n)
 hist(X[1,], density=20, breaks = 30, prob=TRUE)
 curve(dnorm, add=TRUE, col="darkblue", lwd=2)
+title(main = NULL, sub = "Histogram showing the distribution of x1, as well as a normal density plot.", xlab = NULL, ylab = NULL)
 hist(X[2,], density=20, breaks = 30, prob=TRUE)
 curve(dnorm, add=TRUE, col="darkblue", lwd=2)
-
+title(main = NULL, sub = "Histogram showing the distribution of x2, as well as a normal density plot.", xlab = NULL, ylab = NULL)
 ```
 
 ```{r, echo=FALSE}
@@ -402,38 +404,50 @@ theta <- rejection.sampling.multinomial(n)
 ```{r, echo=FALSE}
 hist(theta$samples, density=20, breaks = 30, prob=TRUE)
 abline(v = mean(theta$samples), col = "blue", lwd = 2)
-curve(posterior.f(x)*sum(theta$samples)/sum(posterior.f(theta$samples)), add=TRUE, col="darkblue", lwd=2)
+title(main = NULL, sub = "Histogram showing the distribution of theta, as well as a multinormal density plot and the mean value of theta.", xlab = NULL, ylab = NULL)
+curve(posterior.f(x)/integrate(posterior.f, lower=0, upper=1)$value, add=TRUE, col="darkblue", lwd=2)
 cat("Theta sample mean", mean(theta$samples))
 ```
 Here is a plot over the density of the sampled $\theta$'s as well as the sampled mean. As we can see the sample mean of $\theta$ is circa 0.623, which may suggest that the prior was not right (as we would expect mean close to 0.5 from a uniform (0, 1) distribution). 
 
 ## 2)
-Here we have 
+Here we have sampled from the rejection sampling to obtain a set of samples such that we can use monte carlo integration to estimate the mean:
+$$
+\hat \mu = \frac{1}{N} \sum_{i=1}^N \theta_i.
+$$
+As well we have computed the expected mean by numerical integration of the expression:
+$$
+E[\theta] = \int_{-\infty}^{\infty}h(\theta)f(\theta)d\theta = \int_0^1 \theta f(\theta) d\theta.
+$$
+We also had to divide by the integral over $f(\theta)$ to get the expression normalized. 
 ```{r D2}
+# Using monte carlo integration to estimate the mean
 monte.carlo.integration <- function(){
-  m <- 10000 # Number of samples
-  samples <- rejection.sampling.multinomial(m)$samples
-  mu <- sum(samples)/m
-  li <- list("observed_mean" = mu, "samples" = samples)
-  return (li)
+  n <- 10000 # Number of samples
+  samples <- rejection.sampling.multinomial(n)$samples # Sample n samples from the posterior distribution of theta
+  mu <- sum(samples)/n # Monte carlo estimate of the mean
+  return (list("observed_mean" = mu, "samples" = samples))
 }
 monte.carlo <- monte.carlo.integration()
 
+# Show histogram, density and mean of the samples
 hist(monte.carlo$samples, density=20, breaks = 30, prob=TRUE)
 abline(v = mean(monte.carlo$samples), col = "blue", lwd = 2)
-curve(posterior.f(x)/mean(posterior.f(x)), add=TRUE, col="darkblue", lwd=2)
+curve(posterior.f(x)/integrate(posterior.f, lower=0, upper=1)$value, add=TRUE, col="darkblue", lwd=2)
 
+# Function that returns theta*f(theta) for some value of theta
 numerical.integration <- function(theta){
   return (theta*posterior.f(theta))
 }
+# Numerival integration of theta*f(theta) to obtain the expected mean
 Analytic_mean <- integrate(numerical.integration, lower=0,upper=1)$value/integrate(posterior.f, lower=0, upper=1)$value
 ```
 
 ```{r, echo=FALSE}
-cat("Observed mean: ", monte.carlo$observed_mean, "\n")
+cat("Monte Carlo mean: ", monte.carlo$observed_mean, "\n")
 cat("Analytic mean: ", Analytic_mean, "\n")
 ```
-
+As we can see from the print out, the mean obtained by monte carlo integration is almost equal to the expected $\theta$ obtained by numerical integration.
 
 ## 3) 
 Sampling using the rejection algorithm leads to a number of rejected samples. In this case we have counted the ratio as we sampled, marked as observed, as well as found the analytic solution which will be: 
@@ -465,6 +479,7 @@ $$
 $$
 Running this algorithm as code gives a estimator $\tilde \mu_{IS}$ for the new mean.
 ```{r D4}
+# 
 beta.distribution <- function(x, alpha, beta){
   return(x^(alpha-1)*(1-x)^(beta-1)/beta(alpha, beta))
 }
