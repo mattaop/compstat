@@ -76,7 +76,7 @@ generate.samples.g<- function(alpha, n){
   # For loop as we have to check which expression to apply
   for (i in 1:n){
     if (u[i] < c/(alpha)){
-      x <- c(x, (u[i]*(alpha)/c)^(1/alpha))
+      x <- c(x, (u[i]*alpha/c)^(1/alpha))
     }
     else{
       x <- c(x, 1-log(exp(1)/c*(1-u[i])))
@@ -102,7 +102,7 @@ generate.normal <- function(n){
   u2 <- runif(n) # Uniform distributed random variable
   x1 <- sqrt(-2*log(u1))*cos(2*pi*u2) # Normal distributed random variable
   x2 <- sqrt(-2*log(u1))*sin(2*pi*u2) # Normal distributed random variable
-  X <- rbind(x1, x2)
+  X <- rbind(x1, x2) # Format the variates to be a matrix
   return (X)
 }
 X <- generate.normal(n)
@@ -116,10 +116,10 @@ title(main = NULL, sub = "Histogram showing the distribution of x2, as well as a
 
 ```{r, echo=FALSE}
 cat("Expected mean: ", c(0, 0), "\n")
-cat("Expected variance:  \n")
+cat("Expected covariance:  \n")
 cbind(c(1,0),c(0,1))
 cat("Sample mean: ", mean(X[1, ]), mean(X[2, ]), "\n")
-cat("Sample variance: \n")
+cat("Sample covariance: \n")
 cov(t(X))
 ```
 
@@ -131,25 +131,27 @@ Writing function generate.d.normal that generates samples from a $d$-variate nor
 ```{r A4}
 # Generate n samples from d variate normal distribution
 n <- 10000 #Number of samples
-mu <- c(0,0)
-sigma <- cbind(c(1,0.5),c(0.5,1))
+mu <- c(0, 0) #Expected values. d is the length of the mu vector
+sigma <- cbind(c(1,0.5),c(0.5,1)) # Covariance between the different distributions
 generate.d.normal <- function(n, mu, sigma){
-  A <- chol(sigma)
-  d <- length(mu)
-  X <- generate.normal(n*d)
-  x <- matrix(X[1,], nrow=d, ncol=n)
-  Z <- mu+t(A)%*%x
+  A <- chol(sigma) # Cholesky decompostion of the covariance matrix
+  d <- length(mu) # Number of variates
+  X <- generate.normal(n*d) # n*d normal distributed random variables
+  x <- matrix(X[1,], nrow=d, ncol=n) # Format the random variables as a n x d matrix
+  Z <- mu+t(A)%*%x # Scales the random variables to be d variate
+  return(Z)
 }
+Z <- generate.d.normal(n, mu, sigma)
 ```
 
 ```{r, echo=FALSE}
 Z <- generate.d.normal(n, mu, sigma)
 cat("Expected mean: ", mu, "\n")
-cat("Expected variance: \n")
+cat("Expected covariance: \n")
 sigma
 cat("\n")
 cat("Sample mean: ", mean(Z[1,]), mean(Z[2,]), "\n")
-cat("Sample variance: \n")
+cat("Sample covariance: \n")
 cov(t(Z))
 ```
 As we see, $\tilde \mu$ is close to 
@@ -158,8 +160,18 @@ ER MU KUN 2-VARIAT?
 
 # Problem B
 
+## 1)
+### (a)
+ is found in A.2 to be $c = \frac{\alpha e}{\alpha + e}$. Thus we have the acceptance probability is given by:
+$$
+P \bigg(U \leq \frac{1}{c} \cdot \frac{f(x)}{g(x)} \bigg) = \int_{- \infty}^{\infty} \frac{f(x)}{c \cdot g(x)}g(x) dx = \int_{- \infty}^{\infty} \frac{f(x)}{c} dx = c^{-1} = \frac{\alpha + e}{\alpha e}.
+$$
+### (b)
+
+
+
 ```{r B1}
-#Function f(x)
+#Function f(x) - gamma distributed returns a value given x and alpha
 function.f <- function(x, alpha){
   if (x>0){
     return (x^(alpha-1)*exp(-x)/gamma(alpha))
@@ -169,7 +181,7 @@ function.f <- function(x, alpha){
   }
 }
 
-#Function g(x)
+#Function g(x) from A returns a value given x and alpha
 function.g <- function(x, alpha){
   c = alpha*exp(1)/(alpha+exp(1))
   if (x>0 && x<1){
@@ -187,14 +199,14 @@ function.g <- function(x, alpha){
 n <- 10000 #Number of samples
 alpha <- 0.3
 rejection.sampling <- function(n, alpha){
-  c <- (alpha+exp(1))/(gamma(alpha)*alpha*exp(1))
+  c <- (alpha+exp(1))/(gamma(alpha)*alpha*exp(1)) # Expression for c
   samples <- c()
   for (i in 1:n){
     repeat{
-      x <- generate.samples.g(alpha, 1)
-      acceptance.prob <- function.f(x, alpha)/(c*function.g(x, alpha))
-      if(runif(1) <= acceptance.prob){
-        samples <- c(samples, x)
+      x <- generate.samples.g(alpha, 1) # Generate a sample from g
+      acceptance.prob <- function.f(x, alpha)/(c*function.g(x, alpha)) # Compute acceptance probability
+      if(runif(1) <= acceptance.prob){ # Check if random number is accepted
+        samples <- c(samples, x) # Save accepted samples
         break
       }
     }
@@ -202,6 +214,8 @@ rejection.sampling <- function(n, alpha){
   return (samples)
 }
 ```
+
+
 
 ```{r, echo=FALSE}
 y <- rejection.sampling(n, alpha)
@@ -212,6 +226,59 @@ cat("Sample variance: ",  var(y))
 
 ```
 
+### (a)
+Finding expressions for $a$, $b_+$ and $b_-$, and taking the logarithm to avoid high values for the boundaries.
+$$
+a = \sqrt{\sup_x(x^2 f^*(x))} = \sqrt{\sup_x(x^ {(\alpha -1)}e^{-x})}
+$$
+$$
+\frac{\partial x^{(\alpha -1)}e^{-1}}{\partial x} = (\alpha-1) x^\alpha e^{-x} -x^{\alpha-1}e^{-x} = 0
+$$
+
+$$
+(\alpha -1) - x = 0 \implies x = (\alpha-1)
+$$
+$$
+a = \sqrt{(\alpha-1)^ {(\alpha -1)}e^{-(\alpha-1)})} \implies log(a) = \frac{(\alpha-1)}{2}log(\alpha-1)-\frac{(\alpha-1)}{2}
+$$
+
+$$
+b_+ = \sqrt{\sup_{x \geq 0} (x^2 f^*(x))} = \sqrt{\sup_x(x^2 x^ {(\alpha -1)}e^{-x})} = \sqrt{\sup_x(x^ {(\alpha +1)}e^{-x})}
+$$
+
+$$
+\frac{\partial x^{(\alpha +1)}e^{-1}}{\partial x} = (\alpha+1) x^\alpha e^{-x} -x^{\alpha+1}e^{-x} = 0
+$$
+
+$$
+(\alpha +1) - x = 0 \implies x = (\alpha+1)
+$$
+
+$$
+b_+ = \sqrt{(\alpha+1)^ {(\alpha +1)}e^{-(\alpha+1)})} \implies log(b_+) = \frac{(\alpha+1)}{2}log(\alpha+1)-\frac{(\alpha+1)}{2}
+$$
+
+$$
+b_- = -\sqrt{\sup_{x \leq 0} (x^2 f^*(x))} = 0
+$$
+We want to find an expression for the logarithm of a uniform distributed random variable, without drawing from the unifrom variable (since the upper limits are so large numbers). Thus we use:
+$$
+u \sim U(0,1) \implies -log(u) \sim Exp(1)
+$$
+
+$$
+u \sim U(0,1) \implies x = \beta u \sim U(0, \beta)
+$$
+Thus we get:
+$$
+-log(x/\beta) = -log(u) \sim Exp(1).
+$$
+Using this we can sample log (x), where $x \sim U(0, \beta)$:
+$$
+log(x) = - exp(1) + log(\beta)
+$$
+
+log
 ```{r B2}
 # An analytic log(gamma(x, alpha))-function
 log.gamma <- function(x, alpha){
@@ -222,18 +289,18 @@ n <- 10000
 alpha <- 30
 ratio.of.uniforms <- function(n, alpha){
   sample.counter <- 0
-  b.minus <- 0
-  log.b.plus <- (alpha+1)/2*(log(alpha+1)-1)
-  log.a <- (alpha-1)/2*(log(alpha-1)-1)
+  b.minus <- 0 # Expression for b-
+  log.b.plus <- (alpha+1)/2*(log(alpha+1)-1) # Expression for log(b+)
+  log.a <- (alpha-1)/2*(log(alpha-1)-1) # Expression for log(a)
   samples <- c()
   for(i in 1:n){
     repeat{
       sample.counter <- sample.counter + 1
-      log.x1 <- -generate.exponential(1, rate=1) + log.a
-      log.x2 <- -generate.exponential(1, rate=1) + log.b.plus
-      log.y <- log.x2 - log.x1
-      y <- exp(log.y)
-      if (2*log.x1 <= log.gamma(y, alpha)){
+      log.x1 <- -generate.exponential(1, rate=1) + log.a # Draw from log(x1)
+      log.x2 <- -generate.exponential(1, rate=1) + log.b.plus # Draw from log(x2)
+      log.y <- log.x2 - log.x1 # Compute log(y) = log(x2/x1)
+      y <- exp(log.y) # Get y-value
+      if (2*log.x1 <= log.gamma(y, alpha)){ # Check if value are accepted
         samples <- c(samples, y)
         break
       }
@@ -254,19 +321,21 @@ cat("Mean: ", mean(y), "\n")
 cat("Variance: ", var(y), "\n")
 ```
 
+
+
 ```{r B3}
 n = 10000
-alpha = 0.1
-beta = 2
+alpha = 0.1 # alpha parameter
+beta = 2 # beta parameter
 sample.gamma <- function(n, alpha, beta){
-  if(alpha < 1){
+  if(alpha < 1){ #If alpha is less than 1, draw from the rejection sampling method
     return(rejection.sampling(n, alpha)/beta)
   }
   else if (alpha == 1){
-    return(generate.exponential(1, n)/beta)
+    return(generate.exponential(1, n)/beta) # If alpha is equal to 1, draw from Exp(1)
   }
   else if (alpha > 1){
-    return(ratio.of.uniforms(n, alpha)/beta)
+    return(ratio.of.uniforms(n, alpha)/beta) # If alpha is larger than 1, draw from ratio-of-uniforms method
   }
   else{
     return(0)
@@ -283,8 +352,10 @@ print("Observed: ")
 cat("Mean: ", mean(y), "\n")
 cat("Variance: ", var(y), "\n")
 ```
+
+
 # Problem C
-# 1)
+## 1)
 Claim: Given independent variables $z_k\sim \text{gamma}(\alpha_k,\beta=1)$ for $k=1,...,K$, define $x_k=z_k\cdot(\sum_{k=1}^K z_k)^{-1}$ for $k=1,...,K$. Then vector $(x_1,...,x_K)$ has the Dirichlet distrution with parameter vector $\alpha=(\alpha_1,...,\alpha_K)$.
 Demonstration: Consider vector $x=(x_1,...,x_{K-1})$ with $x_k$ as before and vairable $v=\sum_{k=1}^K z_k$. Express the transformation
 $$
@@ -374,6 +445,8 @@ We also have the values for $\boldsymbol{y}$: $y_1 = 125$, $y_2 = 18$, $y_3 = 20
 ```{r D1}
 # Rejection sampling
 n <- 20000 #Number of samples
+
+# The posterior function, returns value based on input theta
 posterior.f <- function(theta){
   y <- c(125, 18, 20, 34)
   return ((2+theta)^y[1]*(1-theta)^(y[2]+y[3])*theta^y[4])
@@ -381,22 +454,21 @@ posterior.f <- function(theta){
 }
 rejection.sampling.multinomial <- function(n){
   sample.counter <- 0
-  c <- optimize(posterior.f, c(0, 1), maximum=TRUE)$objective
+  c <- optimize(posterior.f, c(0, 1), maximum=TRUE)$objective # Finds c times the normalizing constant
   samples <- c()
   for(i in 1:n){
     repeat{
       sample.counter <- sample.counter + 1
-      theta <- runif(1)
-      acceptance.prob <- posterior.f(theta)/c
-      u <- runif(1)
-      if (u <= acceptance.prob){
-        samples <- c(samples, theta)
+      theta <- runif(1) # Draw theta from uniform distribution
+      acceptance.prob <- posterior.f(theta)/c # Computes alpha
+      u <- runif(1) # Draw random value for uniform distribution
+      if (u <= acceptance.prob){ # Check if the theta is accepted
+        samples <- c(samples, theta) # If accepted, store theta in samples
         break
       }
     }
   }
-  li <- list("samples" = samples, "number.samples" = sample.counter)
-  return (li)
+  return (list("samples" = samples, "number.samples" = sample.counter))
 }
 theta <- rejection.sampling.multinomial(n)
 ```
@@ -404,7 +476,7 @@ theta <- rejection.sampling.multinomial(n)
 ```{r, echo=FALSE}
 hist(theta$samples, density=20, breaks = 30, prob=TRUE)
 abline(v = mean(theta$samples), col = "blue", lwd = 2)
-title(main = NULL, sub = "Histogram showing the distribution of theta, as well as a multinormal density plot and the mean value of theta.", xlab = NULL, ylab = NULL)
+title(main = NULL, sub = "Histogram showing the distribution, density and mean value of theta.", xlab = NULL, ylab = NULL)
 curve(posterior.f(x)/integrate(posterior.f, lower=0, upper=1)$value, add=TRUE, col="darkblue", lwd=2)
 cat("Theta sample mean", mean(theta$samples))
 ```
@@ -479,14 +551,14 @@ $$
 $$
 Running this algorithm as code gives a estimator $\tilde \mu_{IS}$ for the new mean.
 ```{r D4}
-# 
+# Function that returns value from Beta(alpha, beta) distribution
 beta.distribution <- function(x, alpha, beta){
   return(x^(alpha-1)*(1-x)^(beta-1)/beta(alpha, beta))
 }
 importance.sampling <- function(n){
-  samples <- rejection.sampling.multinomial(n)$samples
-  w = (1-samples)^4
-  mu.is <- sum(samples*w)/sum(w)
+  samples <- rejection.sampling.multinomial(n)$samples # Draw samples from the posterior with Beta(1, 1) as prior
+  w = (1-samples)^4 # Compute the weights
+  mu.is <- sum(samples*w)/sum(w) # Compute the importance sampling
   return(mu.is)
 }
 
