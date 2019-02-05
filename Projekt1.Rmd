@@ -1,5 +1,6 @@
 ---
 title: "CompStat 1"
+author: "Adrian Bruland & Mathias Opland"
 output:
   pdf_document: default
   html_document: default
@@ -75,7 +76,7 @@ generate.samples.g<- function(alpha, n){
   x <- c()
   # For loop as we have to check which expression to apply
   for (i in 1:n){
-    if (u[i] < c/(alpha)){
+    if (u[i] < c/alpha){
       x <- c(x, (u[i]*alpha/c)^(1/alpha))
     }
     else{
@@ -161,15 +162,11 @@ ER MU KUN 2-VARIAT?
 # Problem B
 
 ## 1)
-### (a)
- is found in A.2 to be $c = \frac{\alpha e}{\alpha + e}$. Thus we have the acceptance probability is given by:
+(a) c is found in A.2 to be $c = \frac{\alpha e}{\alpha + e}$. Thus we have the acceptance probability is given by:
 $$
 P \bigg(U \leq \frac{1}{c} \cdot \frac{f(x)}{g(x)} \bigg) = \int_{- \infty}^{\infty} \frac{f(x)}{c \cdot g(x)}g(x) dx = \int_{- \infty}^{\infty} \frac{f(x)}{c} dx = c^{-1} = \frac{\alpha + e}{\alpha e}.
 $$
-### (b)
-
-
-
+(b) Using the result in (a), we write a rejection sampling alogrithm that samples from g, check if they are accepted in f, and then return n samples from f.
 ```{r B1}
 #Function f(x) - gamma distributed returns a value given x and alpha
 function.f <- function(x, alpha){
@@ -223,33 +220,37 @@ cat("Expected mean: ", alpha, "\n")
 cat("Expected variance: ",alpha, " \n")
 cat("Sample mean: ", mean(y), "\n")
 cat("Sample variance: ",  var(y))
-
 ```
+As the print out shows, our sampled mean and variance is close to the expected values for gamma distribution:
 
-### (a)
-Finding expressions for $a$, $b_+$ and $b_-$, and taking the logarithm to avoid high values for the boundaries.
 $$
-a = \sqrt{\sup_x(x^2 f^*(x))} = \sqrt{\sup_x(x^ {(\alpha -1)}e^{-x})}
-$$
-$$
-\frac{\partial x^{(\alpha -1)}e^{-1}}{\partial x} = (\alpha-1) x^\alpha e^{-x} -x^{\alpha-1}e^{-x} = 0
+E[X] = \frac{\alpha}{\beta}, \quad Var[X] = \frac{\alpha}{\beta^2}.
 $$
 
+## 2)
+(a) Finding expressions for $a$, $b_+$ and $b_-$, and taking the logarithm to avoid high values for the boundaries.
+$$
+a = \sqrt{\sup_x(f^*(x))} = \sqrt{\sup_x(x^ {(\alpha -1)}e^{-x})}
+$$
+Finding the maximum value of $x^2f^*(x)$:
+$$
+\frac{\partial x^{(\alpha -1)}e^{-1}}{\partial x} = (\alpha-1) x^\alpha e^{-x} -x^{\alpha-1}e^{-x} = 0.
+$$
+Further:
 $$
 (\alpha -1) - x = 0 \implies x = (\alpha-1)
 $$
+Thus we have an expression for x at the maximum point:
 $$
 a = \sqrt{(\alpha-1)^ {(\alpha -1)}e^{-(\alpha-1)})} \implies log(a) = \frac{(\alpha-1)}{2}log(\alpha-1)-\frac{(\alpha-1)}{2}
 $$
-
+And find the expression for log(a). Doing the same for $b_+$:
 $$
 b_+ = \sqrt{\sup_{x \geq 0} (x^2 f^*(x))} = \sqrt{\sup_x(x^2 x^ {(\alpha -1)}e^{-x})} = \sqrt{\sup_x(x^ {(\alpha +1)}e^{-x})}
 $$
-
 $$
 \frac{\partial x^{(\alpha +1)}e^{-1}}{\partial x} = (\alpha+1) x^\alpha e^{-x} -x^{\alpha+1}e^{-x} = 0
 $$
-
 $$
 (\alpha +1) - x = 0 \implies x = (\alpha+1)
 $$
@@ -263,11 +264,11 @@ b_- = -\sqrt{\sup_{x \leq 0} (x^2 f^*(x))} = 0
 $$
 We want to find an expression for the logarithm of a uniform distributed random variable, without drawing from the unifrom variable (since the upper limits are so large numbers). Thus we use:
 $$
-u \sim U(0,1) \implies -log(u) \sim Exp(1)
+u \sim U(0,1) \implies -log(u) \sim Exp(1).
 $$
-
+Using linear transformation, we get:
 $$
-u \sim U(0,1) \implies x = \beta u \sim U(0, \beta)
+u \sim U(0,1) \implies x = \beta u \sim U(0, \beta).
 $$
 Thus we get:
 $$
@@ -278,7 +279,7 @@ $$
 log(x) = - exp(1) + log(\beta)
 $$
 
-log
+(b) Under is a code sampling from the gamma distribution using ratio-of-uniforms method.
 ```{r B2}
 # An analytic log(gamma(x, alpha))-function
 log.gamma <- function(x, alpha){
@@ -306,22 +307,27 @@ ratio.of.uniforms <- function(n, alpha){
       }
     }
   }
-  cat("Rejection ratio: ", (sample.counter-n)/n , "\n")
+  cat("Rejection ratio: ", (sample.counter)/n , "\n")
   return (samples)
 }
+y <- ratio.of.uniforms(n, alpha)
 ```
 
 ```{r, echo=FALSE}
-y <- ratio.of.uniforms(n, alpha)
-print("Expected: ")
-cat("Mean: ", alpha, "\n")
-cat("Variance: ", alpha, "\n")
-print("Observed: ")
-cat("Mean: ", mean(y), "\n")
-cat("Variance: ", var(y), "\n")
+cat("Expected mean: ", alpha, "\n")
+cat("Expected variance: ", alpha, "\n")
+cat("Sample mean: ", mean(y), "\n")
+cat("Sample variance: ", var(y), "\n")
 ```
+As we can see, the expected mean and variance is close to our sampled mean and variance. This is a good indicator that the algorithm works. We can also see that the ratio $\frac{Total}{Accepted}$ is over 4, which means that a lot of the sample is rejected (the sample area is much larger than the function area).
 
+## 3)
+Now using thath the rejection sampling works for $\alpha < 1$, ratio-of-uniforms method works for $\alpha > 1$ and Gam(1, 1) = Exp(1). Now, using linear transformations:
 
+$$
+X \sim Gam(\alpha, 1) \implies \frac{X}{\beta} \sim Gam(\alpha, \beta),
+$$
+we get the following code for sampling from gamma distribution:
 
 ```{r B3}
 n = 10000
@@ -345,15 +351,13 @@ sample.gamma <- function(n, alpha, beta){
 
 ```{r, echo=FALSE}
 y <- sample.gamma(n, alpha, beta)
-print("Expected: ")
-cat("Mean: ", alpha/beta, "\n")
-cat("Variance: ", alpha/beta^2, "\n")
-print("Observed: ")
-cat("Mean: ", mean(y), "\n")
-cat("Variance: ", var(y), "\n")
+cat("Expected mean: ", alpha/beta, "\n")
+cat("Expected variance: ", alpha/beta^2, "\n")
+cat("Sample mean: ", mean(y), "\n")
+cat("Expected variance: ", var(y), "\n")
 ```
 
-
+As in B2(b), we see that the sampled mean and variance is close to the expected values.
 # Problem C
 ## 1)
 Claim: Given independent variables $z_k\sim \text{gamma}(\alpha_k,\beta=1)$ for $k=1,...,K$, define $x_k=z_k\cdot(\sum_{k=1}^K z_k)^{-1}$ for $k=1,...,K$. Then vector $(x_1,...,x_K)$ has the Dirichlet distrution with parameter vector $\alpha=(\alpha_1,...,\alpha_K)$.
@@ -527,7 +531,7 @@ $$
 c^{-1} = \int_0^1 \frac{f(x)}{c} dx.
 $$
 Using the built in optimize and integrate function, we get the integral, which will be the ratio $\frac{\textrm{Total samples}}{\textrm{Accepted samples}}$:
-```{r D3, echo=FALSE}
+```{r D3, echo=TRUE}
 n = 20000 #number of samples
 cat("Observed: ", rejection.sampling.multinomial(n)$number.samples/n)
 cat("Analytic: ", optimize(posterior.f, c(0, 1), maximum=TRUE)$objective/integrate(posterior.f, lower=0, upper=1)$value)
